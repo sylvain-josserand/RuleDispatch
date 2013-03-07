@@ -32,7 +32,6 @@ setup(
     download_url = "http://peak.telecommunity.com/snapshots/",
     zip_safe    = sys.version>='2.3.5',
     test_suite  = 'dispatch.tests.test_suite',
-    package_dir = {'':'src'},
     package_data = {'': ['*.txt']},
     packages    = find_packages('src'),
     features    = {'speedups': speedups}

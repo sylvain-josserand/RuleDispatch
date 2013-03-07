@@ -28,10 +28,11 @@ setup(
     author_email="peak@eby-sarna.com",
     license="PSF or ZPL",
     install_requires = ['PyProtocols>=1.0a0dev-r2302', 'Extremes>=1.1'],
-    url = "http://pypi.python.org/pypi/RuleDispatch",
-    download_url = "http://peak.telecommunity.com/snapshots/",
+    #url = "http://pypi.python.org/pypi/RuleDispatch",
+    #download_url = "http://peak.telecommunity.com/snapshots/",
     zip_safe    = sys.version>='2.3.5',
     test_suite  = 'dispatch.tests.test_suite',
+    package_dir={'': 'src'},
     package_data = {'': ['*.txt']},
     packages    = find_packages('src'),
     features    = {'speedups': speedups}

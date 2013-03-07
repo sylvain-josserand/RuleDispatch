@@ -9,13 +9,13 @@ WARRANTIES OF ANY KIND WHATSOEVER.
 import ez_setup, sys
 ez_setup.use_setuptools()
 
-from setuptools import setup, Feature, Extension, find_packages
+from setuptools import setup, Feature, Extension
 
 speedups = Feature(
     "optional C speed-enhancement modules",
     standard = True,
     ext_modules = [
-        Extension("dispatch._d_speedups", ["src/dispatch/_d_speedups.pyx"]),
+        Extension("dispatch._d_speedups", ["dispatch/_d_speedups.pyx"]),
     ]
 )
 
@@ -32,9 +32,8 @@ setup(
     #download_url = "http://peak.telecommunity.com/snapshots/",
     zip_safe    = sys.version>='2.3.5',
     test_suite  = 'dispatch.tests.test_suite',
-    package_dir={'': 'src'},
     package_data = {'': ['*.txt']},
-    packages    = find_packages('src'),
+    packages    = ['dispatch'],
     features    = {'speedups': speedups}
 )
 

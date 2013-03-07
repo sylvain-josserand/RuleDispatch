@@ -1,0 +1,17 @@
+README.txt
+setup.cfg
+setup.py
+RuleDispatch.egg-info/PKG-INFO
+RuleDispatch.egg-info/SOURCES.txt
+RuleDispatch.egg-info/dependency_links.txt
+RuleDispatch.egg-info/requires.txt
+RuleDispatch.egg-info/top_level.txt
+RuleDispatch.egg-info/zip-safe
+dispatch/__init__.py
+dispatch/_d_speedups.c
+dispatch/ast_builder.py
+dispatch/combiners.py
+dispatch/functions.py
+dispatch/interfaces.py
+dispatch/predicates.py
+dispatch/strategy.py

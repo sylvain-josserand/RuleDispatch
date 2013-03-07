@@ -547,6 +547,9 @@ class Pointer(int):
 
     def __eq__(self,other):
         return self is other or int(self)==other and self.ref() is not None
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         if self.ref() is None:

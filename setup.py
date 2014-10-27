@@ -6,6 +6,8 @@ This software may be used under the same terms as Python or Zope, with NO
 WARRANTIES OF ANY KIND WHATSOEVER.
 """
 
+from Cython.Distutils import build_ext
+
 import ez_setup, sys
 ez_setup.use_setuptools()
 
@@ -27,13 +29,18 @@ setup(
     author="Phillip J. Eby",
     author_email="peak@eby-sarna.com",
     license="PSF or ZPL",
-    install_requires = ['PyProtocols>=1.0a0dev-r2302', 'Extremes>=1.1'],
+    install_requires=[
+        'PyProtocols>=1.0a0dev-r2302',
+        'Extremes>=1.1',
+        'Cython>=0.21'
+    ],
     #url = "http://pypi.python.org/pypi/RuleDispatch",
     #download_url = "http://peak.telecommunity.com/snapshots/",
     zip_safe    = sys.version>='2.3.5',
     test_suite  = 'dispatch.tests.test_suite',
     package_data = {'': ['*.txt']},
     packages    = ['dispatch'],
-    features    = {'speedups': speedups}
+    features    = {'speedups': speedups},
+    cmdclass={'build_ext': build_ext},
 )
 

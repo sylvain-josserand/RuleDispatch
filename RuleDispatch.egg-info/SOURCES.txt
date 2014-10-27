@@ -9,8 +9,10 @@ RuleDispatch.egg-info/top_level.txt
 RuleDispatch.egg-info/zip-safe
 dispatch/__init__.py
 dispatch/_d_speedups.c
+dispatch/_d_speedups.pyx
 dispatch/ast_builder.py
 dispatch/combiners.py
+dispatch/combiners.txt
 dispatch/functions.py
 dispatch/interfaces.py
 dispatch/predicates.py

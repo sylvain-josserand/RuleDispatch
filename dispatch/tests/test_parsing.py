@@ -6,7 +6,8 @@ from dispatch.predicates import *; from dispatch.strategy import *
 from dispatch.ast_builder import *
 from dispatch import predicates
 import operator,sys,types,dispatch
-MAXINT = `sys.maxint`
+from functools import reduce
+MAXINT = repr(sys.maxsize)
 
 class StringBuilder:
 
@@ -493,7 +494,7 @@ class ExprBuilderTests(TestCase):
     def testCalls(self):
         pe = self.parse
 
-        a,b,c,d = map(self.arguments.__getitem__, "abcd")
+        a,b,c,d = list(map(self.arguments.__getitem__, "abcd"))
 
         md = lambda k,v: Call(dict,Call(zip,Tuple(tuple,*k),Tuple(tuple,*v)))
 
@@ -578,16 +579,16 @@ class ExprBuilderTests(TestCase):
 
         gi = lambda ob,key: Call(operator.getitem,ob,key)
         gs = lambda ob,start,stop: Call(operator.getslice,ob,start,stop)
-        gso = lambda ob,*x: gi(ob, Call(slice,*map(Const,x)))
+        gso = lambda ob,*x: gi(ob, Call(slice,*list(map(Const,x))))
 
         self.assertEqual(pe("a[1]"),   gi(a,Const(1)))
         self.assertEqual(pe("a[2,3]"), gi(a,Tuple(tuple,Const(2),Const(3))))
         self.assertEqual(pe("a[...]"), gi(a,Const(Ellipsis)))
 
         # 2-element slices (getslice)
-        self.assertEqual(pe("a[:]"),   gs(a,Const(0),Const(sys.maxint)))
+        self.assertEqual(pe("a[:]"),   gs(a,Const(0),Const(sys.maxsize)))
         self.assertEqual(pe("a[1:2]"), gs(a,Const(1),Const(2)))
-        self.assertEqual(pe("a[1:]"),  gs(a,Const(1),Const(sys.maxint)))
+        self.assertEqual(pe("a[1:]"),  gs(a,Const(1),Const(sys.maxsize)))
         self.assertEqual(pe("a[:2]"),  gs(a,Const(0),Const(2)))
 
         # 3-part slice objects (getitem(slice())
@@ -662,14 +663,14 @@ class ExprBuilderTests(TestCase):
 
         # check locals
         self.checkConstOrVar(
-            [(name,const) for name,const in self.namespaces[0].items()
+            [(name,const) for name,const in list(self.namespaces[0].items())
                 if name not in self.arguments
             ]
         )
 
         # check globals
         self.checkConstOrVar(
-            [(name,const) for name,const in self.namespaces[1].items()
+            [(name,const) for name,const in list(self.namespaces[1].items())
                 if name not in self.arguments
                     and name not in self.namespaces[0]
             ]
@@ -677,7 +678,7 @@ class ExprBuilderTests(TestCase):
 
         # check builtins
         self.checkConstOrVar(
-            [(name,const) for name,const in self.namespaces[2].items()
+            [(name,const) for name,const in list(self.namespaces[2].items())
                 if name not in self.arguments
                     and name not in self.namespaces[0]
                     and name not in self.namespaces[1]
@@ -767,13 +768,13 @@ class PredicateTests(TestCase):
         )
 
         # optimization when 'is None' and type tests occur on an expression
-        self.assertEqual(pe('x is None'),Signature(x=types.NoneType))
+        self.assertEqual(pe('x is None'),Signature(x=type(None)))
         self.assertEqual(pe('x is not None'),
-            Signature(x=NotCriterion(types.NoneType)))
+            Signature(x=NotCriterion(type(None))))
 
-        self.assertEqual(pe('not (x is not None)'),Signature(x=types.NoneType))
+        self.assertEqual(pe('not (x is not None)'),Signature(x=type(None)))
         self.assertEqual(pe('not (x is None)'),
-            Signature(x=NotCriterion(types.NoneType)))
+            Signature(x=NotCriterion(type(None))))
 
 
 
@@ -784,13 +785,13 @@ class PredicateTests(TestCase):
         self.assertEqual(pe('isinstance(x,int)'), Signature(x=int))
 
         self.assertEqual(pe('isinstance(x,(str,unicode))'),
-            Signature(x=str)|Signature(x=unicode))
+            Signature(x=str)|Signature(x=str))
 
         self.assertEqual(pe('isinstance(x,(int,(str,unicode)))'),
-            Signature(x=int)|Signature(x=str)|Signature(x=unicode))
+            Signature(x=int)|Signature(x=str)|Signature(x=str))
 
         self.assertEqual(pe('not isinstance(x,(int,(str,unicode)))'),
-            Signature(x=~ICriterion(int)&~ICriterion(str)&~ICriterion(unicode))
+            Signature(x=~ICriterion(int)&~ICriterion(str)&~ICriterion(str))
         )
 
         self.assertEqual(
@@ -798,19 +799,19 @@ class PredicateTests(TestCase):
 
         self.assertEqual(pe('issubclass(x,(str,unicode))'),
             Signature(x=SubclassCriterion(str)) |
-            Signature(x=SubclassCriterion(unicode))
+            Signature(x=SubclassCriterion(str))
         )
 
         self.assertEqual(pe('issubclass(x,(int,(str,unicode)))'),
             Signature(x=SubclassCriterion(int)) |
             Signature(x=SubclassCriterion(str)) |
-            Signature(x=SubclassCriterion(unicode))
+            Signature(x=SubclassCriterion(str))
         )
 
         self.assertEqual(pe('not issubclass(x,(int,(str,unicode)))'),
             Signature(
                 x=AndCriterion(
-                    *[~SubclassCriterion(x) for x in (int,str,unicode)])
+                    *[~SubclassCriterion(x) for x in (int,str,str)])
                 )
         )
 
@@ -825,11 +826,11 @@ class PredicateTests(TestCase):
         self.failUnless(isinstance(not_in,Signature))
         self.failUnless(isinstance(in_expr,Predicate))
         self.assertEqual(in_expr,
-            Predicate([Signature(x=Inequality('==',v)) for v in 1,2,3])
+            Predicate([Signature(x=Inequality('==',v)) for v in (1,2,3)])
         )
         self.assertEqual(not_in,
             Signature([
-                (x,reduce(operator.and_,[Inequality('<>',v) for v in 1,2,3]))
+                (x,reduce(operator.and_,[Inequality('<>',v) for v in (1,2,3)]))
             ])
         )
 

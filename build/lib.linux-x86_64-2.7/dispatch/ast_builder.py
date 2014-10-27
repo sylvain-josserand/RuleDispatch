@@ -190,9 +190,9 @@ def power(builder, nodelist):
             lineno = item[2]
             return builder.Subscript(nodelist,
                 (symbol.subscript,
-                    (token.STRING,`0`,lineno),
+                    (token.STRING,repr(0),lineno),
                     item,
-                    (token.STRING,`sys.maxint`,lineno)
+                    (token.STRING,repr(sys.maxsize),lineno)
                 )
             )
 
@@ -279,7 +279,7 @@ def com_call_function(builder, primaryNode, nodelist):
         elif tok[0]==token.DOUBLESTAR:
             dstar_node = ch
         else:
-            raise AssertionError, 'unknown node type: %s' % (tok,)
+            raise AssertionError('unknown node type: %s' % (tok,))
 
     return builder.CallFunc(primaryNode, args, kw, star_node, dstar_node)
 
@@ -293,16 +293,16 @@ def com_argument(nodelist, kw):
 
     if len(nodelist) == 2:
         if kw:
-            raise SyntaxError, "non-keyword arg after keyword arg"
+            raise SyntaxError("non-keyword arg after keyword arg")
         return 0, nodelist[1]
 
     n = nodelist[1]
     while len(n) == 2 and n[0] != token.NAME:
         n = n[1]
     if n[0] != token.NAME:
-        raise SyntaxError, "keyword can't be an expression (%r)" % (n,)
+        raise SyntaxError("keyword can't be an expression (%r)" % (n,))
 
-    return 1, ((token.STRING,`n[1]`,n[2]), nodelist[3])
+    return 1, ((token.STRING,repr(n[1]),n[2]), nodelist[3])
 
 
 # listmaker: test ( list_for | (',' test)* [','] )
@@ -342,8 +342,8 @@ def subscript(builder, nodelist):
         if len(nodelist[-1])==3:
             stride = nodelist[-1][2]
     else:
-        start = (token.NUMBER,`0`,lineno)
-        stop  = (token.NUMBER,`sys.maxint`,lineno)
+        start = (token.NUMBER,repr(0),lineno)
+        stop  = (token.NUMBER,repr(sys.maxsize),lineno)
 
     if nl==5:
         start,stop = nodelist[1],nodelist[3]        # test : test sliceop
@@ -367,7 +367,7 @@ def subscript(builder, nodelist):
         return builder.Sliceobj(start,stop,stride)
     return builder.Slice(start,stop)
 
-for sym,name in sym_name.items():
+for sym,name in list(sym_name.items()):
     if name in globals():
         production[sym] = globals()[name]
 

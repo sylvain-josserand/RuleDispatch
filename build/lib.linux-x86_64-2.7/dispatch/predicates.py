@@ -1,4 +1,4 @@
-from __future__ import generators
+
 from dispatch import *
 from dispatch.strategy import Inequality, Signature, ExprBase, default
 from dispatch.strategy import SubclassCriterion, NullCriterion
@@ -7,6 +7,7 @@ from dispatch.ast_builder import build
 
 import protocols, operator, dispatch
 from types import NoneType
+from functools import reduce
 
 __all__ = [
     'Call',
@@ -68,7 +69,8 @@ class ExprBuilder:
         'is': is_, 'is not': is_not
     }
 
-    def Compare(self,initExpr,((op,other),)):
+    def Compare(self,initExpr, xxx_todo_changeme):
+        ((op,other),) = xxx_todo_changeme
         return Call(
             self._cmp_ops[op], build(self,initExpr), build(self,other)
         )
@@ -225,7 +227,7 @@ class OrExpr(LogicalExpr):
 
     def asFuncAndIds(self,generic):
 
-        argIds = map(generic.getExpressionId,self.argexprs)
+        argIds = list(map(generic.getExpressionId,self.argexprs))
 
         def or_(get):
             for arg in argIds:
@@ -249,7 +251,7 @@ class AndExpr(LogicalExpr):
 
     def asFuncAndIds(self,generic):
 
-        argIds = map(generic.getExpressionId,self.argexprs)
+        argIds = list(map(generic.getExpressionId,self.argexprs))
 
         def and_(get):
             for arg in argIds:
@@ -272,7 +274,7 @@ class IfElse(LogicalExpr):
     """Python 2.5 conditional expression"""
 
     def asFuncAndIds(self,generic):
-        argIds = map(generic.getExpressionId, self.argexprs)
+        argIds = list(map(generic.getExpressionId, self.argexprs))
         def ifelse(get):
             if get(argIds[1]): return get(argIds[0])
             return get(argIds[2])
@@ -415,7 +417,7 @@ class MultiCriterion(AbstractCriterion):
     enumerable = False
 
     def __new__(klass,*criteria):
-        criteria, all = map(ISeededCriterion,criteria), []
+        criteria, all = list(map(ISeededCriterion,criteria)), []
         nt = criteria[0].node_type
         for c in criteria:
             if c.node_type is not nt:
@@ -437,7 +439,7 @@ class MultiCriterion(AbstractCriterion):
         for criterion in self.criteria:
             for seed in criterion.seeds():
                 seeds[seed]=True
-        return seeds.keys()
+        return list(seeds.keys())
 
 
     def subscribe(self,listener):
@@ -572,7 +574,8 @@ class CriteriaBuilder:
     }
 
 
-    def Compare(self,initExpr,((op,other),)):
+    def Compare(self,initExpr, xxx_todo_changeme1):
+        ((op,other),) = xxx_todo_changeme1
         left = build(self.expr_builder,initExpr)
         right = build(self.expr_builder,other)
 
@@ -716,7 +719,7 @@ def convertIsInstanceToClassCriterion(expr,criterion):
     if not criterion.truth:
         return and_criteria(expr,[~ICriterion(cls) for cls in seq])
 
-    return or_criteria(expr,map(ICriterion,seq))
+    return or_criteria(expr,list(map(ICriterion,seq)))
 
 
 [expressionSignature.when(
@@ -732,7 +735,7 @@ def convertIsSubclassToSubClassCriterion(expr,criterion):
     if not criterion.truth:
         return and_criteria(expr,[~SubclassCriterion(cls) for cls in seq])
 
-    return or_criteria(expr,map(SubclassCriterion,seq))
+    return or_criteria(expr,list(map(SubclassCriterion,seq)))
 
 
 

@@ -1,8 +1,8 @@
 """Method combining subclasses of Dispatcher and GenericFunction"""
 
-from strategy import ordered_signatures
-from interfaces import AmbiguousMethod
-from functions import Dispatcher
+from .strategy import ordered_signatures
+from .interfaces import AmbiguousMethod
+from .functions import Dispatcher
 
 class MapDispatcher(Dispatcher):
     """Abstract base class for method combiners that merge metadata
@@ -31,7 +31,7 @@ class MapDispatcher(Dispatcher):
                 for k,v in self.getItems(*item):
                     if k in d:  # already defined
                         continue
-                    if k in current and current[k]<>v:
+                    if k in current and current[k]!=v:
                         return AmbiguousMethod(k,v,current[k])
                     current[k] = v
             d.update(current)

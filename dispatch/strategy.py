@@ -39,7 +39,7 @@
 
 
 
-from __future__ import generators
+
 from protocols import Protocol, Adapter, StickyAdapter
 from protocols.advice import getMRO
 import protocols, operator, inspect
@@ -184,11 +184,11 @@ class SeededIndex(object):
         if seed in self.allSeeds:
             return  # avoid duping entries if this is a reseed via dispatcher
 
-        for criterion,itsSeeds in self.criteria.items():
+        for criterion,itsSeeds in list(self.criteria.items()):
             if seed in criterion:
                 itsSeeds.append(seed)
         if reseed:
-            for criterion,itsSeeds in self.enumerables.items():
+            for criterion,itsSeeds in list(self.enumerables.items()):
                 if seed in criterion:
                     itsSeeds.append(seed)
         self.allSeeds[seed] = None
@@ -219,7 +219,7 @@ class DispatchNode(dict):
         dict.__init__(
             self,
             [(key,build(subcases))
-                for key,subcases in index.casemap_for(cases).items()]
+                for key,subcases in list(index.casemap_for(cases).items())]
         )
 
     def reseed(self,key):
@@ -282,7 +282,7 @@ def validateCriterion(criterion, node_type, seeded=True, parents=None):
             assert d[seed], (criterion,"should have contained",seed)
             del d[seed]
 
-        for value in d.values():
+        for value in list(d.values()):
             assert not value,(criterion,"should've included",seed,"in matches")
 
         _parents = set(criterion.parent_criteria())
@@ -334,7 +334,7 @@ class TGraph:
 
     def add(self,s,e):
         self.data.setdefault(s,{})
-        for old_s,old_es in self.data.items():
+        for old_s,old_es in list(self.data.items()):
             if s in old_es or s is old_s:
                 g = self.data.setdefault(old_s,{})
                 g[e] = 1
@@ -436,7 +436,7 @@ class AbstractCriterion(object):
                 yield key
 
     def __invert__(self):
-        from predicates import NotCriterion
+        from .predicates import NotCriterion
         return NotCriterion(self)
 
     def subscribe(self,listener):
@@ -450,7 +450,7 @@ class AbstractCriterion(object):
 
 
     def __and__(self,other):
-        from predicates import AndCriterion
+        from .predicates import AndCriterion
         return AndCriterion(self,other)
 
     def implies(self,other):
@@ -597,7 +597,7 @@ class IdentityCriterion(AbstractCriterion):
         return ob==self.subject
 
     def __repr__(self):
-        return `self.subject`
+        return repr(self.subject)
 
 
 class NullCriterion(AbstractCriterion):
@@ -677,7 +677,7 @@ def dispatch_by_inequalities(table,ob):
                 return table[ranges[mid]]
 
 def concatenate_ranges(range_map):
-    ranges = range_map.keys(); ranges.sort()
+    ranges = list(range_map.keys()); ranges.sort()
     output = []
     last = Min
     for (l,h) in ranges:
@@ -711,7 +711,7 @@ class InequalityIndex(SeededIndex):
     def count_for(self,cases):
         """Get the total count of outgoing branches, given incoming cases"""
         casemap = self.casemap_for(cases)
-        return len(casemap), sum([len(x) for x in casemap.itervalues()])
+        return len(casemap), sum([len(x) for x in casemap.values()])
 
     def clear(self):
         """Reset index to empty"""
@@ -761,7 +761,7 @@ class InequalityIndex(SeededIndex):
                     tmp[lo][0].append(case)
                     if hi is not Max: tmp[hi][1].append(case)
         if have_ineq:
-            keys = tmp.keys()
+            keys = list(tmp.keys())
             keys.sort()
             current = frozenset(tmp.get(Min,[[]])[0])
             hi = Min
@@ -774,7 +774,7 @@ class InequalityIndex(SeededIndex):
                 current = current.union(add)
         else:
             out[Min,Max] = []   # default
-            for val,(add,remove,eq) in tmp.items():
+            for val,(add,remove,eq) in list(tmp.items()):
                 out[val,val] = eq
         self.last_out = out
         self.last_cases = cases
@@ -866,10 +866,10 @@ class Inequality(object):
         ranges = {}
         last = Min
         for lo,hi in self.ranges:
-            if lo<>Min and (last,lo) not in self:
+            if lo!=Min and (last,lo) not in self:
                 ranges[last,lo] = 1
             last = hi
-            if lo<>hi and lo<>Min and (lo,lo) not in self:
+            if lo!=hi and lo!=Min and (lo,lo) not in self:
                 ranges[lo,lo] = 1
         if last is not Max:
             if (last,last) not in self:
@@ -936,7 +936,7 @@ class _Notifier(Protocol):
 
         try:
             if self.__subscribers:
-                for subscriber in self.__subscribers.keys():
+                for subscriber in list(self.__subscribers.keys()):
                     subscriber.criterionChanged()
         finally:
             self._Protocol__lock.release()
@@ -970,7 +970,7 @@ class ProtocolCriterion(StickyAdapter,AbstractCriterion):
         self.notifier.unsubscribe(listener)
 
     def seeds(self):
-        return self.notifier._Protocol__adapters.keys() + [object]
+        return list(self.notifier._Protocol__adapters.keys()) + [object]
 
     def __contains__(self,ob):
         if isinstance(ob,ClassTypes):
@@ -992,7 +992,7 @@ class ProtocolCriterion(StickyAdapter,AbstractCriterion):
         if other is NullCriterion:
             return True
 
-        for base in self.notifier._Protocol__adapters.keys():
+        for base in list(self.notifier._Protocol__adapters.keys()):
             if base not in other:
                 return False
 
@@ -1078,7 +1078,7 @@ def ordered_signatures(cases):
 
     while rest:
         best = most_specific_signatures(rest)
-        map(rest.remove,best)
+        list(map(rest.remove,best))
         yield best
 
 
@@ -1183,7 +1183,7 @@ def separate_qualifiers(qualified_cases, **postprocessors):
             qualifier="primary"
         cases.setdefault(qualifier,[]).append((signature,method))
 
-    for k,v in cases.items():
+    for k,v in list(cases.items()):
         if k in postprocessors:
             for p in postprocessors[k]:
                 v = p(v)
@@ -1311,7 +1311,7 @@ class Predicate(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return `self.items`
+        return repr(self.items)
 
 protocols.declareAdapter(
     lambda ob: Predicate([ob]), [IDispatchPredicate], forProtocols=[ISignature]
@@ -1325,7 +1325,7 @@ class Signature(object):
     __slots__ = 'data','keys'
 
     def __init__(self, __id_to_test=(), **kw):
-        items = list(__id_to_test)+[(Argument(name=k),v) for k,v in kw.items()]
+        items = list(__id_to_test)+[(Argument(name=k),v) for k,v in list(kw.items())]
         self.data = data = {}; self.keys = keys = []
         for k,v in items:
             v = ICriterion(v)
@@ -1337,7 +1337,7 @@ class Signature(object):
 
     def implies(self,otherSig):
         otherSig = ISignature(otherSig)
-        for expr_id,otherCriterion in otherSig.items():
+        for expr_id,otherCriterion in list(otherSig.items()):
             if not self.get(expr_id).implies(otherCriterion):
                 return False
         return True
@@ -1350,19 +1350,19 @@ class Signature(object):
 
     def __repr__(self):
         return 'Signature(%s)' % (','.join(
-            [('%r=%r' % (k,v)) for k,v in self.data.items()]
+            [('%r=%r' % (k,v)) for k,v in list(self.data.items())]
         ),)
 
 
     def __and__(self,other):
-        me = self.data.items()
+        me = list(self.data.items())
         if not me:
             return other
 
         if IDispatchPredicate(other) is other:
             return Predicate([self]) & other
 
-        they = ISignature(other).items()
+        they = list(ISignature(other).items())
         if not they:
             return self
 
@@ -1374,14 +1374,14 @@ class Signature(object):
 
     def __or__(self,other):
 
-        me = self.data.items()
+        me = list(self.data.items())
         if not me:
             return self  # Always true
 
         if IDispatchPredicate(other) is other:
             return Predicate([self]) | other
 
-        they = ISignature(other).items()
+        they = list(ISignature(other).items())
         if not they:
             return other  # Always true
 
@@ -1404,11 +1404,11 @@ class Signature(object):
         if other is None or other is NullCriterion:
             return False
 
-        for k,v in self.items():
+        for k,v in list(self.items()):
             if v!=other.get(k):
                 return False
 
-        for k,v in other.items():
+        for k,v in list(other.items()):
             if v!=self.get(k):
                 return False
 
@@ -1430,7 +1430,7 @@ class PositionalSignature(Signature):
 
     def __init__(self,criteria,proto=None):
         Signature.__init__(self,
-            zip(map(Argument,range(len(criteria))), criteria)
+            list(zip(list(map(Argument,list(range(len(criteria))))), criteria))
         )
 
 default = Signature()

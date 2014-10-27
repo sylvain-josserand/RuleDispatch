@@ -43,23 +43,23 @@ class TestGraph(TestCase):
 
     def testItems(self):
         g = strategy.TGraph()
-        self.assertEqual(g.items(),[])
+        self.assertEqual(list(g.items()),[])
         g.add(2,3)
-        self.assertEqual(g.items(),[(2,3)])
+        self.assertEqual(list(g.items()),[(2,3)])
         g.add(1,2)
-        items = g.items(); items.sort()
+        items = list(g.items()); items.sort()
         self.assertEqual(items,[(1,2),(1,3),(2,3)])
 
         g = strategy.TGraph()
-        self.assertEqual(g.items(),[])
+        self.assertEqual(list(g.items()),[])
         g.add(1,2)
-        self.assertEqual(g.items(),[(1,2)])
+        self.assertEqual(list(g.items()),[(1,2)])
         g.add(2,3)
-        items = g.items(); items.sort()
+        items = list(g.items()); items.sort()
         self.assertEqual(items,[(1,2),(1,3),(2,3)])
 
         g.add(1,5); g.add(2,6)
-        items = g.items(); items.sort()
+        items = list(g.items()); items.sort()
         self.assertEqual(items,[(1,2),(1,3),(1,5),(1,6),(2,3),(2,6)])
 
     def testSuccessors(self):
@@ -75,7 +75,7 @@ class TestGraph(TestCase):
         self.assertEqual(g.successors([3]),{})
         g.add(3,1)
         self.assertEqual(g.successors([1,2,3]),{})
-        items = g.items(); items.sort()
+        items = list(g.items()); items.sort()
         self.assertEqual(items,
             [(1,1),(1,2),(1,3),(2,1),(2,2),(2,3),(3,1),(3,2),(3,3)])
 
@@ -141,7 +141,7 @@ class CriteriaTests(TestCase):
             seeds = list(ISeededCriterion(klass).seeds())
             self.failUnless(klass in seeds)
             self.failUnless(object in seeds)
-            self.failIf(len(seeds)<>2)
+            self.failIf(len(seeds)!=2)
             validateCriterion(klass,
                 strategy.make_node_type(strategy.dispatch_by_mro),
                 parents=[ICriterion(cls) for cls in getMRO(klass,True)])
@@ -170,13 +170,13 @@ class CriteriaTests(TestCase):
         d4 = {a0:ICriterion(LandVehicle), a1:ICriterion(LandVehicle)}
 
         for d in d1,d2,d3,d4:
-            self.assertEqual( dict(Signature(d.items()).items()),
-                dict([((k,v.node_type),v) for k,v in d.items()]) )
+            self.assertEqual( dict(list(Signature(list(d.items())).items())),
+                dict([((k,v.node_type),v) for k,v in list(d.items())]) )
 
-        s1 = Signature(d1.items())
-        s2 = Signature(d2.items())
-        s3 = Signature(d3.items())
-        s4 = Signature(d4.items())
+        s1 = Signature(list(d1.items()))
+        s2 = Signature(list(d2.items()))
+        s3 = Signature(list(d3.items()))
+        s4 = Signature(list(d4.items()))
         s5 = PositionalSignature(
             (ICriterion(LandVehicle),ICriterion(WaterVehicle),
                 ICriterion(object))
@@ -356,7 +356,7 @@ class CriteriaTests(TestCase):
             validateCriterion(t,Inequality.node_type,seeded=False)
             i[t] = repr(t)
 
-        ct, size = i.count_for(map(repr,[t1,t2,t3,t4,t5]))
+        ct, size = i.count_for(list(map(repr,[t1,t2,t3,t4,t5])))
 
         # Min, ..., 55, ..., 99, ..., 100, ..., 'abc', ..., Max
         self.assertEqual(ct, 11)
@@ -542,7 +542,7 @@ class CriteriaTests(TestCase):
 
     def testInequalityInverses(self):
         self.assertEqual(~Inequality(">=",27), Inequality("<",27))
-        for op,rev in strategy.rev_ops.items():
+        for op,rev in list(strategy.rev_ops.items()):
             self.assertEqual(Inequality(op,27), ~Inequality(rev,27))
 
 
@@ -620,12 +620,12 @@ class CriteriaTests(TestCase):
 
         # Ensure ordering preserved among conditions within a signature
         self.assertNotEqual(
-            (x_gt_10 & y_in_LandVehicle).items(),
-            (y_in_LandVehicle & x_gt_10).items())
+            list((x_gt_10 & y_in_LandVehicle).items()),
+            list((y_in_LandVehicle & x_gt_10).items()))
 
         self.assertNotEqual(
-            (x_gt_10 & y_in_LandVehicle & x_lt_20).items(),
-            (y_in_LandVehicle & x_gt_10 & x_lt_20).items())
+            list((x_gt_10 & y_in_LandVehicle & x_lt_20).items()),
+            list((y_in_LandVehicle & x_gt_10 & x_lt_20).items()))
 
 
     def testSignatureOrdering(self):
@@ -636,7 +636,7 @@ class CriteriaTests(TestCase):
         for data in [gt_10,lt_20], [lt_20,gt_10]:
             # Verify both the raw signature, and an 'and'-ed version
             for s in Signature(data), Signature(data[:1])&Signature(data[1:]):
-                self.assertEqual(s.items(),
+                self.assertEqual(list(s.items()),
                     [((k,v.node_type),v) for k,v in data]
                 )
 
@@ -1190,7 +1190,7 @@ One vehicle is a land vehicle, the other is a sea vehicle.")
     def testSubexpressionOrderingConstraints(self):
 
         g = GenericFunction(lambda x,y:None)
-        self.assertEqual(g.constraints.items(),[])
+        self.assertEqual(list(g.constraints.items()),[])
 
         df = Inequality.node_type
         yx = Call(operator.div, Argument(name='y'), Argument(name='x'))
@@ -1202,28 +1202,28 @@ One vehicle is a land vehicle, the other is a sea vehicle.")
         def x(x,y):
             return "foo"
 
-        self.assertEqual(g.constraints.items(),[])
+        self.assertEqual(list(g.constraints.items()),[])
 
         [g.when('x>0 and y/x>10')]
         def x(x,y):
             return "bar"
 
-        self.assertEqual(g.constraints.items(),[(xid,yxid)])
+        self.assertEqual(list(g.constraints.items()),[(xid,yxid)])
 
         [g.when('x==1 and y>0 and y/x>10')]
         def x(x,y):
             return "bar"
 
-        items = g.constraints.items(); items.sort()
+        items = list(g.constraints.items()); items.sort()
         expected = [(xid,yxid),(yid,yxid)]; expected.sort()
         self.assertEqual(items,expected)
         self.assertEqual(g.constraints.successors([yid,yxid]),{yxid:1})
         self.assertEqual(g.constraints.successors([xid,yxid]),{yxid:1})
 
-        best_id, remaining_ids = g._best_split(range(len(g.cases)), [yxid,yid])
+        best_id, remaining_ids = g._best_split(list(range(len(g.cases))), [yxid,yid])
         self.assertEqual(best_id, yid)
 
-        best_id, remaining_ids = g._best_split(range(len(g.cases)), [yxid,xid])
+        best_id, remaining_ids = g._best_split(list(range(len(g.cases))), [yxid,xid])
         self.assertEqual(best_id, xid)
 
 
@@ -1341,7 +1341,7 @@ One vehicle is a land vehicle, the other is a sea vehicle.")
         self.assertEqual(f(1,2,3,4), (1,2,(3,4)))
         self.assertEqual(f(), ("shoo",42,()))
 
-        f,a = _mkNormalizer(lambda (x,y): None, dispatcher())
+        f,a = _mkNormalizer(lambda x_y: None, dispatcher())
         self.assertEqual(a,['x','y'])
         self.assertEqual(f((1,2)), (1,2))
 
@@ -1397,7 +1397,7 @@ TestClasses = (
 )
 
 def test_combiners():
-    import doctest 
+    from . import doctest 
     return doctest.DocFileSuite(
         'combiners.txt', optionflags=doctest.ELLIPSIS, package='dispatch',
     )

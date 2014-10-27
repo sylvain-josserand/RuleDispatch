@@ -1,6 +1,6 @@
 """Generic function implementations"""
 
-from __future__ import generators
+
 from dispatch.interfaces import *
 
 import protocols, inspect, sys, dispatch
@@ -67,7 +67,7 @@ def setup(__gfProtocol, __gfDefaults):
 
     return %(funcname)s
 """ % locals()
-    exec s in globals(),d; func = d['setup'](protocol,defaults)
+    exec(s, globals(),d); func = d['setup'](protocol,defaults)
 
     def when(cond):
         """Add following function to this GF, using 'cond' as a guard"""
@@ -184,7 +184,7 @@ class ExprCache(object):
             pass
 
         f,args = self.expr_defs[item]
-        f = self.cache[item] = f(*map(self.__getitem__,args))
+        f = self.cache[item] = f(*list(map(self.__getitem__,args)))
         return f
 
 
@@ -293,7 +293,7 @@ class Dispatcher(BaseDispatcher):
     def __init__(self,args):
         self.args = args
         self.argct = len(args)
-        global strategy; import strategy
+        global strategy; from . import strategy
         self.argMap = dict([(name,strategy.Argument(name=name)) for name in args])
         lock = self._lock = allocate_lock()
         self._acquire = lock.acquire
@@ -329,7 +329,7 @@ class Dispatcher(BaseDispatcher):
     def _build_dispatcher(self, memo=None, disp_ids=None, cases=None):
         if memo is None:
             self._rebuild_indexes()
-            cases = frozenset(range(len(self.cases)))
+            cases = frozenset(list(range(len(self.cases))))
             disp_ids = tuple(self.disp_indexes)
             memo = {}
 
@@ -371,8 +371,8 @@ class Dispatcher(BaseDispatcher):
         if self.dirty:
             cases, self.cases = self.cases, []
             self.dirty = False
-            for ind in self.disp_indexes.values(): ind.clear()
-            map(self._addCase, cases)
+            for ind in list(self.disp_indexes.values()): ind.clear()
+            list(map(self._addCase, cases))
 
     def criterionChanged(self):
         self._acquire()    # XXX could deadlock if called during dispatch
@@ -400,7 +400,7 @@ class Dispatcher(BaseDispatcher):
 
     def _addCase(self,case):
         case_num = len(self.cases)
-        for disp_id, criterion in case[0].items():
+        for disp_id, criterion in list(case[0].items()):
             self.disp_indexes[disp_id][criterion] = case_num
 
         self.cases.append(case)
@@ -420,7 +420,7 @@ class Dispatcher(BaseDispatcher):
         try:
             signature = strategy.Signature(
                 [(self._dispatch_id(expr,criterion),criterion)
-                    for expr,criterion in ISignature(signature).items()
+                    for expr,criterion in list(ISignature(signature).items())
                         if criterion is not strategy.NullCriterion
                 ]
             )
@@ -434,7 +434,7 @@ class Dispatcher(BaseDispatcher):
     def parseRule(self,rule,frame=None,depth=3):
         """Parse 'rule' if it's a string/unicode, otherwise return 'None'"""
 
-    [parseRule.when([str,unicode])]
+    [parseRule.when([str,str])]
     def parseRule(self,rule,frame,depth):
         frame = frame or sys._getframe(depth)
         return self.parse(rule, frame.f_locals, frame.f_globals)
@@ -490,9 +490,9 @@ class Dispatcher(BaseDispatcher):
 
 
 
-    def _dispatch_id(self,(expr,disp_func),criterion):
+    def _dispatch_id(self, xxx_todo_changeme,criterion):
         """Replace expr/criterion with a local key"""
-
+        (expr,disp_func) = xxx_todo_changeme
         criterion.subscribe(self)
         expr = self.getExpressionId(expr)
         disp = expr, criterion.node_type
@@ -523,7 +523,7 @@ class Dispatcher(BaseDispatcher):
 
     def _addConstraints(self, signature):
         pre = []
-        for key,criterion in signature.items():
+        for key,criterion in list(signature.items()):
             if key[0] >= self.argct:    # constrain non-argument exprs
                 for item in pre: self.constraints.add(item,key)
             pre.append(key)
@@ -719,7 +719,7 @@ def _mkNormalizer(func,dispatcher):
         outargs=''
         retargs = []
     else:
-        retargs = filter(None,outargs.replace(' ','').split(','))
+        retargs = [_f for _f in outargs.replace(' ','').split(',') if _f]
 
     d ={}
     s = """
@@ -730,7 +730,7 @@ def setup(__dispatcher,__gfDefaults):
 
     return %(funcname)s
 """ % locals()
-    exec s in globals(),d
+    exec(s, globals(),d)
     return d['setup'](dispatcher.__getitem__,defaults), retargs
 
 defaultNormalize = lambda *__args: __args
